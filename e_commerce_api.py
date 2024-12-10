@@ -5,8 +5,10 @@ from password import password
 from marshmallow import fields
 from marshmallow import ValidationError
 from created_tables import Customer, CustomerAccount, Order, Product, db, app
+from flask_cors import CORS
 
 ma = Marshmallow(app)
+cors = CORS(app)
 
 
 class CustomerSchema(ma.Schema):
@@ -64,6 +66,11 @@ products_schema = ProductSchema(many=True)
 def get_customer(id):
     customer = Customer.query.get_or_404(id) 
     return customer_schema.jsonify(customer)
+
+@app.route('/customers', methods=['GET'])
+def get_customers():
+    customers = Customer.query.all() 
+    return customers_schema.jsonify(customers)
 
 
 @app.route('/customer', methods=['POST'])
