@@ -12,7 +12,7 @@ cors = CORS(app)
 
 
 class CustomerSchema(ma.Schema):
-    id = fields.Int(required=True)
+    id = fields.Int(required=False)
     name = fields.String(required=True)
     email = fields.String(required=True)
     phone = fields.String(required=True)
@@ -38,7 +38,7 @@ customeraccounts_schema = CustomerAccountSchema(many=True)
 
 
 class OrderSchema(ma.Schema):
-    id = fields.Int(required=True)
+    id = fields.Int(required=False)
     date = fields.String(required=True)
     customer_id = fields.Int(required=True)
 
@@ -50,7 +50,7 @@ orders_schema = OrderSchema(many=True)
 
 
 class ProductSchema(ma.Schema):
-    id = fields.Int(required=True)
+    id = fields.Int(required=False)
     name = fields.String(required=True)
     price = fields.Float(required=True)
 
@@ -154,6 +154,11 @@ def get_product_info(id):
     product = Product.query.get_or_404(id) 
     return product_schema.jsonify(product)
 
+@app.route('/products', methods=['GET'])
+def get_products():
+    products = Product.query.all() 
+    return products_schema.jsonify(products)
+
 
 @app.route('/product', methods=['POST'])
 def add_product():
@@ -162,10 +167,10 @@ def add_product():
     except ValidationError as err:
         return jsonify(err.messages), 400
     
-    new_product = Product(id=product_data['id'], name=product_data['name'], price=product_data['price'])
+    new_product = Product( name=product_data['name'], price=product_data['price'])
     db.session.add(new_product) 
     db.session.commit()
-    return jsonify({"message": "New product added successfully"}), 201
+    return product_schema.jsonify(new_product), 201
 
 
 @app.route('/product/<int:id>', methods=['PUT'])
@@ -176,7 +181,7 @@ def update_product(id):
     except ValidationError as err:
         return jsonify(err.messages), 400
     
-    product.id = product_data['id']
+    
     product.name = product_data['name']
     product.price = product_data['price']
     db.session.commit()
@@ -196,23 +201,27 @@ def product_list():
 
 # -----------------------------------------------
 
-@app.route('/orders', methods=['POST'])
+@app.route('/order', methods=['POST'])
 def place_order():
     try:
         order_data = order_schema.load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
     
-    new_order = Order(id=order_data['id'], date=order_data['date'], customer_id=order_data['customer_id'])
+    new_order = Order( date=order_data['date'], customer_id=order_data['customer_id'])
     db.session.add(new_order) 
     db.session.commit()
     return jsonify({"message": "New order added successfully"}), 201
 
-@app.route('/orders/<int:id>', methods=['GET'])
+@app.route('/order/<int:id>', methods=['GET'])
 def retrieve_order(id):
     order = Order.query.get_or_404(id) 
     return order_schema.jsonify(order)
 
+@app.route('/orders', methods=['GET'])
+def get_orders():
+    orders = Order.query.all() 
+    return orders_schema.jsonify(orders)
 
 
 @app.route('/trackorders/<int:id>', methods=['GET'])
